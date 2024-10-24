@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "137319564870",
+    "project_id": "vespera-3e158",
+    "storage_bucket": "vespera-3e158.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:137319564870:android:fc3f014623ae8dc1006c47",
+        "android_client_info": {
+          "package_name": "com.vespera.edc"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "137319564870-h7keddtmp947jv9nf35ue1i8g0k1derv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vespera.edc",
+            "certificate_hash": "d64cd028dce4f75673db517a45bf932c94dc5ad3"
+          }
+        },
+        {
+          "client_id": "137319564870-sef1ig7curv60ob2g0ft37fr5800hism.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBHbtO7V8kd40aDoACchWJnkqxJOvEiKpk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "137319564870-sef1ig7curv60ob2g0ft37fr5800hism.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
