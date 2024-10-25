@@ -34,7 +34,7 @@ async def get_users_collection():
     db = client.users
     return db.get_collection("users")
 
-async def get_project_collection():
+async def getProjectCollection():
     if client is None:
         raise HTTPException(status_code=500, detail="Database connection not established")
     db = client.projects
