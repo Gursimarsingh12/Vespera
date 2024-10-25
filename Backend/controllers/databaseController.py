@@ -13,6 +13,8 @@ async def connect_to_database():
     if client is None:
         try:
             mongo_uri = os.getenv("MONGO")
+            if not mongo_uri:
+                raise ValueError("MongoDB URI not found in environment variables.")
             client = AsyncIOMotorClient(mongo_uri)
             print("Connected to MongoDB")
         except Exception as e:
@@ -23,9 +25,8 @@ async def close_database_connection():
     global client
     if client is not None:
         client.close()
+        client = None
         print("MongoDB connection closed")
-
-
 
 async def get_users_collection():
     if client is None:
@@ -33,7 +34,7 @@ async def get_users_collection():
     db = client.users
     return db.get_collection("users")
 
-async def getProjectCollection():
+async def get_project_collection():
     if client is None:
         raise HTTPException(status_code=500, detail="Database connection not established")
     db = client.projects
