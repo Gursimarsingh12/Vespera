@@ -8,9 +8,9 @@ router = APIRouter(
     responses={404: {"description": "Not found"}}
 )
 
-@router.post("/create-user", response_model=User)
-async def create_new_user(user: User):
-    user = await create_user(user)
+@router.post("/create-user")
+async def create_new_user(phone_num : int = Query() , energy_consumption : float = Query()):
+    user = await create_user(phone_num , energy_consumption)
     return user
 
 @router.get("/get-holdings")

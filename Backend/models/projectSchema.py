@@ -32,7 +32,6 @@ class ProjectHolding(BaseModel):
     total_investment: float  # Total investment by the user
     profit: Dict[str, float]  # Dictionary with keys for monthly, quarterly, and annual profit
     carbon_offset: float  # Carbon offset per share
-    investor_id: str
     purchase_date: datetime
     projected_annual_return: float  # Expected annual return for the holding
     current_share_value: float  # Current market value per share

@@ -1,6 +1,7 @@
+from uuid import UUID
 from controllers.databaseController import get_users_collection, getProjectCollection
 from datetime import datetime
-from models import ProjectHolding
+from models.projectSchema import ProjectHolding
 
 
 async def buyShare(phone_num: int, share_id: str, amount: int):
@@ -23,8 +24,8 @@ async def buyShare(phone_num: int, share_id: str, amount: int):
     # Deduct total cost from user's balance
     updated_balance = existing_user["balance"] - total_cost
 
-    # Calculate profit based on revenue per share
-    revenue_per_share = project.get("revenue_per_share", 0.0)  # Default to 0 if not available
+    # Extract earnings per share for profit calculations
+    earnings_per_share = project["earnings_per_share"]
 
     # Check if user already has holdings in this project
     active_stocks = existing_user.get("active_stocks", [])
@@ -34,9 +35,9 @@ async def buyShare(phone_num: int, share_id: str, amount: int):
         # Update existing holding
         existing_holding["num_shares"] += amount
         existing_holding["total_investment"] += total_cost
-        existing_holding["profit"]["annual"] = revenue_per_share * existing_holding["num_shares"]
-        existing_holding["profit"]["monthly"] = revenue_per_share * existing_holding["num_shares"] / 12
-        existing_holding["profit"]["quarterly"] = revenue_per_share * existing_holding["num_shares"] / 4
+        existing_holding["profit"]["annual"] = earnings_per_share * existing_holding["num_shares"]
+        existing_holding["profit"]["monthly"] = earnings_per_share * existing_holding["num_shares"] / 12
+        existing_holding["profit"]["quarterly"] = earnings_per_share * existing_holding["num_shares"] / 4
         existing_holding["carbon_offset"] += project["annual_carbon_offset"] / project["project_size"] * amount
     else:
         # Create new holding entry
@@ -46,12 +47,11 @@ async def buyShare(phone_num: int, share_id: str, amount: int):
             share_price=project["project_subscription_cost"],
             total_investment=total_cost,
             profit={
-                "monthly": revenue_per_share * amount / 12,  # Monthly revenue from project per share
-                "quarterly": revenue_per_share * amount / 4,  # Quarterly revenue
-                "annual": revenue_per_share * amount  # Annual revenue
+                "monthly": earnings_per_share * amount / 12,  # Monthly revenue from project per share
+                "quarterly": earnings_per_share * amount / 4,  # Quarterly revenue
+                "annual": earnings_per_share * amount  # Annual revenue
             },
-            carbon_offset=project["annual_carbon_offset"] / project["project_size"] * amount,  
-            investor_id=existing_user["phone_number"],
+            carbon_offset=project["annual_carbon_offset"] / project["project_size"] * amount,
             purchase_date=datetime.utcnow(),
             projected_annual_return=project["expected_roi"],
             dividend_yield=0.0,  
@@ -103,10 +103,10 @@ async def sellShare(phone_num: int, share_id: str, amount: int):
 
     # Calculate earnings based on current share value and revenue per share
     total_earnings = existing_holding["current_share_value"] * amount
-    revenue_per_share = project.get("revenue_per_share", 0.0)
+    earnings_per_share = project["earnings_per_share"]
 
     # Update the user's balance
-    updated_balance = existing_user["balance"] + total_earnings + (revenue_per_share * amount)
+    updated_balance = existing_user["balance"] + total_earnings + (earnings_per_share * amount)
 
     # Update or remove the holding
     if existing_holding["num_shares"] == amount:
@@ -115,7 +115,7 @@ async def sellShare(phone_num: int, share_id: str, amount: int):
         # Update holding details if only some shares are sold
         existing_holding["num_shares"] -= amount
         existing_holding["total_investment"] -= existing_holding["share_price"] * amount
-        existing_holding["profit"]["annual"] = revenue_per_share * existing_holding["num_shares"]
+        existing_holding["profit"]["annual"] = earnings_per_share * existing_holding["num_shares"]
 
     # Update user document in the database
     await user_collection.update_one(
@@ -139,3 +139,23 @@ async def addFunds(phone_num : int , amount : float):
 
     user_collection = await get_users_collection()
     existing_user = await user_collection.find_one({"phone_number": phone_num})
+
+    if existing_user is None:
+        return {"message": "User not found"}
+    
+    updated_balance = existing_user["balance"] + amount
+
+    await user_collection.update_one(
+        {"phone_number": phone_num},
+        {
+            "$set": {
+                "balance": updated_balance
+            }
+        }
+    )
+
+    return {
+        "message": "Funds added successfully",
+        "amount_added": amount,
+        "updated_balance": updated_balance
+    }

@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import os
 from controllers.databaseController import connect_to_database, close_database_connection
-from routes import userRoutes, projectRoutes
+from routes import userRoutes, projectRoutes , transactionRoute
 
 app = FastAPI()
 
@@ -28,6 +28,7 @@ async def shutdown_event():
 #App routes
 app.include_router(userRoutes.router)
 app.include_router(projectRoutes.router)
+app.include_router(transactionRoute.router)
 
 
 if __name__ == "__main__":
