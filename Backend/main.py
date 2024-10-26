@@ -29,6 +29,9 @@ async def shutdown_event():
 app.include_router(userRoutes.router)
 app.include_router(projectRoutes.router)
 app.include_router(transactionRoute.router)
+@app.get("/")
+async def root():
+    return {"message": "Welcome to the Project Management API!"}
 
 
 if __name__ == "__main__":
