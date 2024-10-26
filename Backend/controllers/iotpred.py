@@ -2,12 +2,20 @@
 
 import pandas as pd
 import joblib
+import os
 
 def predict_consumption(rooms, bulbs, fans, ovens, washing_machines, acs):
     """Predict energy consumption for given inputs"""
         # Load model and features
-    model = joblib.load('ml\energy_model.joblib')
-    features = joblib.load('ml\model_features.joblib')
+    
+
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    model_path = os.path.join(base_dir, 'energy_model.joblib')
+    features_path = os.path.join(base_dir, 'model_features.joblib')
+
+    model = joblib.load(model_path)
+    features = joblib.load(features_path)
+
         
     # Prepare input data
     input_data = pd.DataFrame([{
@@ -22,7 +30,7 @@ def predict_consumption(rooms, bulbs, fans, ovens, washing_machines, acs):
         # Make prediction
     daily_kwh = model.predict(input_data)[0]
     monthly_kwh = daily_kwh * 30
-    monthly_cost = monthly_kwh * 0.12
+    monthly_cost = monthly_kwh * 0.12 * 84
         
     print(f"\nPrediction for {rooms} room setup:")
     print(f"Devices: {bulbs} bulbs, {fans} fans, {ovens} ovens, {washing_machines} washing machines, {acs} ACs")
