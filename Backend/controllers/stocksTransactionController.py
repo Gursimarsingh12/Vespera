@@ -3,7 +3,6 @@ from controllers.databaseController import get_users_collection, getProjectColle
 from datetime import datetime
 from models.projectSchema import ProjectHolding
 
-
 async def buyShare(phone_num: int, share_id: str, amount: int):
     user_collection = await get_users_collection()
     existing_user = await user_collection.find_one({"phone_number": phone_num})
@@ -16,6 +15,11 @@ async def buyShare(phone_num: int, share_id: str, amount: int):
     
     if project is None:
         return {"message": "Project not found"}
+
+    # Check if there are enough shares available
+    available_shares = project.get("available_shares", 0)
+    if available_shares < amount:
+        return {"message": "Not enough shares available"}
 
     total_cost = project["project_subscription_cost"] * amount
     if existing_user["balance"] < total_cost:
@@ -59,6 +63,11 @@ async def buyShare(phone_num: int, share_id: str, amount: int):
         )
         active_stocks.append(new_holding.dict())
 
+    # Update project details: decrement available shares, increment active subscribers and subscribers accepted
+    updated_available_shares = available_shares - amount
+    updated_active_subscribers = project.get("active_subscribers", 0) + 1
+    updated_subscribers_accepted = project.get("subscribers_accepted", 0) + 1
+
     # Update user document
     await user_collection.update_one(
         {"phone_number": phone_num},
@@ -70,12 +79,24 @@ async def buyShare(phone_num: int, share_id: str, amount: int):
         }
     )
 
+    # Update project document
+    await project_collection.update_one(
+        {"project_id": share_id},
+        {
+            "$set": {
+                "available_shares": updated_available_shares,
+                "active_subscribers": updated_active_subscribers,
+                "subscribers_accepted": updated_subscribers_accepted
+            }
+        }
+    )
+
     return {
         "message": "Shares purchased successfully",
         "amount_purchased": amount,
-        "updated_balance": updated_balance
+        "updated_balance": updated_balance,
+        "updated_available_shares": updated_available_shares
     }
-
 
 async def sellShare(phone_num: int, share_id: str, amount: int):
     user_collection = await get_users_collection()
@@ -110,12 +131,20 @@ async def sellShare(phone_num: int, share_id: str, amount: int):
 
     # Update or remove the holding
     if existing_holding["num_shares"] == amount:
+        # Remove holding if all shares are sold
         active_stocks = [holding for holding in active_stocks if holding["project_id"] != share_id]
+
+        # Decrement active subscribers in the project
+        updated_active_subscribers = max(project.get("active_subscribers", 1) - 1, 0)
     else:
         # Update holding details if only some shares are sold
         existing_holding["num_shares"] -= amount
         existing_holding["total_investment"] -= existing_holding["share_price"] * amount
         existing_holding["profit"]["annual"] = earnings_per_share * existing_holding["num_shares"]
+        updated_active_subscribers = project.get("active_subscribers", 0)  # No change in subscribers if partial sale
+
+    # Update available shares in the project
+    updated_available_shares = project.get("available_shares", 0) + amount
 
     # Update user document in the database
     await user_collection.update_one(
@@ -128,12 +157,25 @@ async def sellShare(phone_num: int, share_id: str, amount: int):
         }
     )
 
+    # Update project document
+    await project_collection.update_one(
+        {"project_id": share_id},
+        {
+            "$set": {
+                "available_shares": updated_available_shares,
+                "active_subscribers": updated_active_subscribers
+            }
+        }
+    )
+
     return {
         "message": "Shares sold successfully",
         "amount_sold": amount,
         "earnings_from_sale": total_earnings,
-        "updated_balance": updated_balance
+        "updated_balance": updated_balance,
+        "updated_available_shares": updated_available_shares
     }
+
 
 async def addFunds(phone_num : int , amount : float):
 
