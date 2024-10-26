@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import os
 from controllers.databaseController import connect_to_database, close_database_connection
-from routes import userRoutes, projectRoutes , transactionRoute
+from routes import userRoutes, projectRoutes , transactionRoute , deviceInitRoute
 
 app = FastAPI()
 
@@ -29,10 +29,14 @@ async def shutdown_event():
 app.include_router(userRoutes.router)
 app.include_router(projectRoutes.router)
 app.include_router(transactionRoute.router)
+app.include_router(deviceInitRoute.router)
+
 @app.get("/")
 async def root():
     return {"message": "Welcome to the Project Management API!"}
 
+
+#Run the server
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
